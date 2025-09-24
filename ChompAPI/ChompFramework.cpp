@@ -11,24 +11,27 @@ int main() {
     window.verbose = true;
 
     Cube cube;
-    Transform t{ {0,0,0}, {0,0,0}, 1.0f };
+	// POS X, Y, Z, ROT X, Y, Z, SCALE
+    Transform t{ {0,0,0}, {0,0,0}, 2.5f };
 
-    window.StartRenderLoop([&]() {
-        int w = window.GetWidth();
-        int h = window.GetHeight();
+window.StartRenderLoop([&]() {
+    int w = window.GetWidth();
+    int h = window.GetHeight();
 
-        auto fb = window.GetFramebuffer();
-        auto zb = window.GetZBuffer();
+    auto fb = window.GetFramebuffer();
+    auto zb = window.GetZBuffer();
 
-        if (fb && zb) {
-            std::fill(fb, fb + w * h, 0x000000);
-            std::fill(zb, zb + w * h, 1.0f);
-            cube.Draw({ 255,0,0 }, t, fb, zb, w, h);
-        }
+    if (fb && zb) {
+        std::fill(fb, fb + w * h, 0x000000);
+        std::fill(zb, zb + w * h, 1.0f);
 
-        t.rotation.y += 0.01f;
-        t.rotation.x += 0.005f;
-        });
+        // Draw cube with fixed rotation
+        cube.Draw({ 255,0,0 }, t, fb, zb, w, h);
+    }
+
+    // <- REMOVE ANY rotation changes here
+});
+
 
     while (true) {
         window.ProcessEvents();

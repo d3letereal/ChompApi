@@ -1,36 +1,71 @@
-#include "Cube.h"
+#include <iostream>
+#include <vector>
 #include <cmath>
 #include <algorithm>
+#include <conio.h> // for _kbhit() and _getch()
 
+struct Vec3 {
+    float x, y, z;
+};
+
+struct Color {
+    int r, g, b;
+};
+
+struct Triangle {
+    Vec3 v0, v1, v2;
+};
+
+struct Transform {
+    Vec3 pos = { 0,0,0 };
+    Vec3 rotation = { 0,0,0 }; // only updated by input
+    float scale = 1.0f;
+};
+
+class Cube {
+public:
+    Cube(float size);
+    void Draw(Color color, const Transform& t, int* framebuffer, float* zbuffer, int width, int height);
+
+private:
+    std::vector<Triangle> triangles;
+
+    Vec3 RotateVertex(const Vec3& v, const Vec3& rotation);
+    Vec3 ProjectVertex(const Vec3& v, int width, int height, float scale);
+    void DrawTriangle(int* framebuffer, float* zbuffer, int width, int height,
+        const Vec3& v0, const Vec3& v1, const Vec3& v2, Color color);
+};
+
+// Constructor
 Cube::Cube(float s) {
-    float hs = s / 2.0f; // half size for centering at origin
+    float hs = s / 2.0f; // half-size
 
     // Front face
-    triangles.push_back({{-hs,-hs, hs}, {hs,-hs, hs}, {hs, hs, hs}});
-    triangles.push_back({{-hs,-hs, hs}, {hs, hs, hs}, {-hs, hs, hs}});
+    triangles.push_back({ {-hs,-hs, hs}, {hs,-hs, hs}, {hs, hs, hs} });
+    triangles.push_back({ {-hs,-hs, hs}, {hs, hs, hs}, {-hs, hs, hs} });
 
     // Back face
-    triangles.push_back({{-hs,-hs,-hs}, {hs, hs,-hs}, {hs,-hs,-hs}});
-    triangles.push_back({{-hs,-hs,-hs}, {-hs, hs,-hs}, {hs, hs,-hs}});
+    triangles.push_back({ {-hs,-hs,-hs}, {hs, hs,-hs}, {hs,-hs,-hs} });
+    triangles.push_back({ {-hs,-hs,-hs}, {-hs, hs,-hs}, {hs, hs,-hs} });
 
     // Left face
-    triangles.push_back({{-hs,-hs,-hs}, {-hs,-hs, hs}, {-hs, hs, hs}});
-    triangles.push_back({{-hs,-hs,-hs}, {-hs, hs, hs}, {-hs, hs,-hs}});
+    triangles.push_back({ {-hs,-hs,-hs}, {-hs,-hs, hs}, {-hs, hs, hs} });
+    triangles.push_back({ {-hs,-hs,-hs}, {-hs, hs, hs}, {-hs, hs,-hs} });
 
     // Right face
-    triangles.push_back({{hs,-hs,-hs}, {hs, hs, hs}, {hs,-hs, hs}});
-    triangles.push_back({{hs,-hs,-hs}, {hs, hs,-hs}, {hs, hs, hs}});
+    triangles.push_back({ {hs,-hs,-hs}, {hs, hs, hs}, {hs,-hs, hs} });
+    triangles.push_back({ {hs,-hs,-hs}, {hs, hs,-hs}, {hs, hs, hs} });
 
     // Top face
-    triangles.push_back({{-hs, hs,-hs}, {-hs, hs, hs}, {hs, hs, hs}});
-    triangles.push_back({{-hs, hs,-hs}, {hs, hs, hs}, {hs, hs,-hs}});
+    triangles.push_back({ {-hs, hs,-hs}, {-hs, hs, hs}, {hs, hs, hs} });
+    triangles.push_back({ {-hs, hs,-hs}, {hs, hs, hs}, {hs, hs,-hs} });
 
     // Bottom face
-    triangles.push_back({{-hs,-hs,-hs}, {hs,-hs, hs}, {-hs,-hs, hs}});
-    triangles.push_back({{-hs,-hs,-hs}, {hs,-hs,-hs}, {hs,-hs, hs}});
+    triangles.push_back({ {-hs,-hs,-hs}, {hs,-hs, hs}, {-hs,-hs, hs} });
+    triangles.push_back({ {-hs,-hs,-hs}, {hs,-hs,-hs}, {hs,-hs, hs} });
 }
 
-// Rotate vertex around X,Y,Z axes
+// Rotate vertex
 Vec3 Cube::RotateVertex(const Vec3& v, const Vec3& rotation) {
     Vec3 r = v;
 
@@ -38,17 +73,17 @@ Vec3 Cube::RotateVertex(const Vec3& v, const Vec3& rotation) {
     float cy = cos(rotation.y), sy = sin(rotation.y);
     float cz = cos(rotation.z), sz = sin(rotation.z);
 
-    // Rotate X
+    // X
     float y = r.y * cx - r.z * sx;
     float z = r.y * sx + r.z * cx;
     r.y = y; r.z = z;
 
-    // Rotate Y
+    // Y
     float x = r.x * cy + r.z * sy;
     z = -r.x * sy + r.z * cy;
     r.x = x; r.z = z;
 
-    // Rotate Z
+    // Z
     x = r.x * cz - r.y * sz;
     y = r.x * sz + r.y * cz;
     r.x = x; r.y = y;
@@ -56,12 +91,12 @@ Vec3 Cube::RotateVertex(const Vec3& v, const Vec3& rotation) {
     return r;
 }
 
-// Simple orthographic projection
+// Orthographic projection
 Vec3 Cube::ProjectVertex(const Vec3& v, int width, int height, float scale) {
     return { v.x * scale + width / 2.0f, v.y * scale + height / 2.0f, v.z };
 }
 
-// Draw triangle using simple Z-buffer
+// Draw triangle with Z-buffer
 void Cube::DrawTriangle(int* framebuffer, float* zbuffer, int width, int height,
     const Vec3& v0, const Vec3& v1, const Vec3& v2, Color color)
 {
@@ -72,7 +107,7 @@ void Cube::DrawTriangle(int* framebuffer, float* zbuffer, int width, int height,
     Vec3 U = { v1.x - v0.x, v1.y - v0.y, v1.z - v0.z };
     Vec3 V = { v2.x - v0.x, v2.y - v0.y, v2.z - v0.z };
     Vec3 normal = { U.y * V.z - U.z * V.y, U.z * V.x - U.x * V.z, U.x * V.y - U.y * V.x };
-    if (normal.z >= 0) return; // back-face culling
+    if (normal.z >= 0) return;
 
     int minX = std::max(0, (int)std::floor(std::min({ v0.x,v1.x,v2.x })));
     int maxX = std::min(width - 1, (int)std::ceil(std::max({ v0.x,v1.x,v2.x })));
@@ -99,6 +134,7 @@ void Cube::DrawTriangle(int* framebuffer, float* zbuffer, int width, int height,
     }
 }
 
+// Draw cube
 void Cube::Draw(Color color, const Transform& t, int* framebuffer, float* zbuffer, int width, int height) {
     for (auto& tri : triangles) {
         Vec3 v0 = RotateVertex(tri.v0, t.rotation);
@@ -115,4 +151,45 @@ void Cube::Draw(Color color, const Transform& t, int* framebuffer, float* zbuffe
 
         DrawTriangle(framebuffer, zbuffer, width, height, p0, p1, p2, color);
     }
+}
+
+// ---------------- MAIN ----------------
+int main() {
+    const int width = 800;
+    const int height = 600;
+
+    int* framebuffer = new int[width * height];
+    float* zbuffer = new float[width * height];
+
+    Cube cube(1.0f);
+    Transform t;
+
+    Color cubeColor = { 255, 0, 0 };
+
+    while (true) {
+        // Reset buffers
+        std::fill(framebuffer, framebuffer + width * height, 0);
+        std::fill(zbuffer, zbuffer + width * height, 1e9f);
+
+        // User input
+        if (_kbhit()) {
+            char c = _getch();
+            if (c == 'w') t.rotation.x += 0.05f;
+            if (c == 's') t.rotation.x -= 0.05f;
+            if (c == 'a') t.rotation.y += 0.05f;
+            if (c == 'd') t.rotation.y -= 0.05f;
+            if (c == 'q') t.rotation.z += 0.05f;
+            if (c == 'e') t.rotation.z -= 0.05f;
+        }
+
+        cube.Draw(cubeColor, t, framebuffer, zbuffer, width, height);
+
+        // TODO: render framebuffer to your screen or console
+        // For simplicity, we just print a single char to show rotation change
+        std::cout << "\rRotation: X=" << t.rotation.x << " Y=" << t.rotation.y << " Z=" << t.rotation.z << "   ";
+    }
+
+    delete[] framebuffer;
+    delete[] zbuffer;
+    return 0;
 }
