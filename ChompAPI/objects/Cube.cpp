@@ -134,8 +134,9 @@ void Cube::DrawTriangle(int* framebuffer, float* zbuffer, int width, int height,
     }
 }
 
-// Draw cube
-void Cube::Draw(Color color, const Transform& t, int* framebuffer, float* zbuffer, int width, int height) {
+// Draw cube with optional outline
+void Cube::Draw(Color color, const Transform& t, int* framebuffer, float* zbuffer, int width, int height, bool showOutline = true) {
+    // --- Draw filled cube ---
     for (auto& tri : triangles) {
         Vec3 v0 = RotateVertex(tri.v0, t.rotation);
         Vec3 v1 = RotateVertex(tri.v1, t.rotation);
@@ -151,45 +152,50 @@ void Cube::Draw(Color color, const Transform& t, int* framebuffer, float* zbuffe
 
         DrawTriangle(framebuffer, zbuffer, width, height, p0, p1, p2, color);
     }
-}
 
-// ---------------- MAIN ----------------
-int main() {
-    const int width = 800;
-    const int height = 600;
+    if (!showOutline) return; // skip outline if false
 
-    int* framebuffer = new int[width * height];
-    float* zbuffer = new float[width * height];
+    // --- Draw outline (wireframe) ---
+    Color outlineColor = { 0,0,0 }; // black outline
+    for (auto& tri : triangles) {
+        Vec3 v0 = RotateVertex(tri.v0, t.rotation);
+        Vec3 v1 = RotateVertex(tri.v1, t.rotation);
+        Vec3 v2 = RotateVertex(tri.v2, t.rotation);
 
-    Cube cube(1.0f);
-    Transform t;
+        // Slightly scale up for outline
+        float outlineScale = t.scale * 1.02f;
+        v0 = { v0.x * outlineScale + t.pos.x, v0.y * outlineScale + t.pos.y, v0.z * outlineScale + t.pos.z };
+        v1 = { v1.x * outlineScale + t.pos.x, v1.y * outlineScale + t.pos.y, v1.z * outlineScale + t.pos.z };
+        v2 = { v2.x * outlineScale + t.pos.x, v2.y * outlineScale + t.pos.y, v2.z * outlineScale + t.pos.z };
 
-    Color cubeColor = { 255, 0, 0 };
+        Vec3 p0 = ProjectVertex(v0, width, height, 100.0f);
+        Vec3 p1 = ProjectVertex(v1, width, height, 100.0f);
+        Vec3 p2 = ProjectVertex(v2, width, height, 100.0f);
 
-    while (true) {
-        // Reset buffers
-        std::fill(framebuffer, framebuffer + width * height, 0);
-        std::fill(zbuffer, zbuffer + width * height, 1e9f);
+        // Draw edges
+        auto DrawLine = [&](Vec3 a, Vec3 b) {
+            int x0 = (int)a.x, y0 = (int)a.y;
+            int x1 = (int)b.x, y1 = (int)b.y;
+            int dx = abs(x1 - x0), dy = abs(y1 - y0);
+            int sx = x0 < x1 ? 1 : -1;
+            int sy = y0 < y1 ? 1 : -1;
+            int err = dx - dy;
 
-        // User input
-        if (_kbhit()) {
-            char c = _getch();
-            if (c == 'w') t.rotation.x += 0.05f;
-            if (c == 's') t.rotation.x -= 0.05f;
-            if (c == 'a') t.rotation.y += 0.05f;
-            if (c == 'd') t.rotation.y -= 0.05f;
-            if (c == 'q') t.rotation.z += 0.05f;
-            if (c == 'e') t.rotation.z -= 0.05f;
-        }
+            while (true) {
+                if (x0 >= 0 && x0 < width && y0 >= 0 && y0 < height)
+                    framebuffer[y0 * width + x0] = (outlineColor.r << 16) | (outlineColor.g << 8) | outlineColor.b;
+                if (x0 == x1 && y0 == y1) break;
+                int e2 = 2 * err;
+                if (e2 > -dy) { err -= dy; x0 += sx; }
+                if (e2 < dx) { err += dx; y0 += sy; }
+            }
+            };
 
-        cube.Draw(cubeColor, t, framebuffer, zbuffer, width, height);
-
-        // TODO: render framebuffer to your screen or console
-        // For simplicity, we just print a single char to show rotation change
-        std::cout << "\rRotation: X=" << t.rotation.x << " Y=" << t.rotation.y << " Z=" << t.rotation.z << "   ";
+        DrawLine(p0, p1);
+        DrawLine(p1, p2);
+        DrawLine(p2, p0);
     }
-
-    delete[] framebuffer;
-    delete[] zbuffer;
-    return 0;
 }
+
+
+

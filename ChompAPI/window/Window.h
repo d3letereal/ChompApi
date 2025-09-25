@@ -25,6 +25,8 @@ public:
     bool IsRunning() const { return running.load(); }
     void HandleResize(int newW, int newH);
 
+    bool IsKeyPressed(int key); // <- check key state
+
 private:
     int width, height;
     std::string title;
