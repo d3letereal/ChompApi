@@ -8,21 +8,26 @@ Chomp API was an experimental project exploring graphics programming and low-lev
 ---
 
 ## 🌟 Features
+
 - ✅ Fully **built from scratch** – no external graphics libraries.
 - ✅ Basic **3D rendering** support.
+- ✅ Capable of rendering **OBJ files with outlines**.
+- ✅ Cross-platform compatibility: works on **Mac OS** and **Windows**.
 - ✅ Designed for learning, experimentation, and prototyping.
 - ✅ Easy to extend for small projects.
 
 ---
 
 ## 🎨 Screenshots
-![Example Rendering](https://raw.githubusercontent.com/d3letereal/ChompApi/refs/heads/master/main2.png)  
-![Example Rendering](https://raw.githubusercontent.com/d3letereal/ChompApi/refs/heads/master/main1.png)  
-*Simple shapes and colors rendered directly on the CPU.*
+
+![Example Rendering 1](https://raw.githubusercontent.com/d3letereal/ChompApi/master/main1.png)  
+![Example Rendering 2](https://raw.githubusercontent.com/d3letereal/ChompApi/master/main2.png)  
+*Simple 3D models and outlines rendered directly on the CPU.*
 
 ---
 
 ## ⚙️ Usage
+
 1. Clone the repository:
-```bash
-git clone https://github.com/OpticStudioGames/chomp-api.git
+   ```bash
+   git clone https://github.com/d3letereal/ChompApi.git
