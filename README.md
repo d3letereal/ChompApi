@@ -9,7 +9,7 @@ Chomp API was an experimental project exploring graphics programming and low-lev
 
 ## 🌟 Features
 - ✅ Fully **built from scratch** – no external graphics libraries.
-- ✅ Basic **2D rendering** support.
+- ✅ Basic **3D rendering** support.
 - ✅ Designed for learning, experimentation, and prototyping.
 - ✅ Easy to extend for small projects.
 
