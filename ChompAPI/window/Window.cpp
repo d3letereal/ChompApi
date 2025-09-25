@@ -139,6 +139,10 @@ void Window::PlatformRender() {
 }
 
 #ifdef _WIN32
+void* Window::GetHWND() const { return hwnd; }
+#endif
+
+#ifdef _WIN32
 void Window::InitWindows() {
     HINSTANCE hInstance = GetModuleHandle(NULL);
     WNDCLASS wc = {};
@@ -156,6 +160,7 @@ void Window::InitWindows() {
 
     SetWindowLongPtr((HWND)hwnd, GWLP_USERDATA, (LONG_PTR)this);
 }
+
 #endif
 
 bool Window::IsKeyPressed(int key) {
@@ -165,3 +170,4 @@ bool Window::IsKeyPressed(int key) {
     return false;
 #endif
 }
+

@@ -134,8 +134,8 @@ void Cube::DrawTriangle(int* framebuffer, float* zbuffer, int width, int height,
     }
 }
 
-// Draw cube with optional outline
-void Cube::Draw(Color color, const Transform& t, int* framebuffer, float* zbuffer, int width, int height, bool showOutline = true) {
+// Draw cube
+void Cube::Draw(Color color, const Transform& t, int* framebuffer, float* zbuffer, int width, int height) {
     // --- Draw filled cube ---
     for (auto& tri : triangles) {
         Vec3 v0 = RotateVertex(tri.v0, t.rotation);
@@ -152,8 +152,6 @@ void Cube::Draw(Color color, const Transform& t, int* framebuffer, float* zbuffe
 
         DrawTriangle(framebuffer, zbuffer, width, height, p0, p1, p2, color);
     }
-
-    if (!showOutline) return; // skip outline if false
 
     // --- Draw outline (wireframe) ---
     Color outlineColor = { 0,0,0 }; // black outline
@@ -196,6 +194,5 @@ void Cube::Draw(Color color, const Transform& t, int* framebuffer, float* zbuffe
         DrawLine(p2, p0);
     }
 }
-
 
 
