@@ -16,7 +16,8 @@ Chomp API was an experimental project exploring graphics programming and low-lev
 ---
 
 ## 🎨 Screenshots
-![Example Rendering](https://via.placeholder.com/600x300?text=Chomp+API+Rendering)  
+![Example Rendering](https://raw.githubusercontent.com/d3letereal/ChompApi/refs/heads/master/main2.png)  
+![Example Rendering](https://raw.githubusercontent.com/d3letereal/ChompApi/refs/heads/master/main1.png)  
 *Simple shapes and colors rendered directly on the CPU.*
 
 ---
