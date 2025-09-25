@@ -1,6 +1,10 @@
 ﻿#include "window/Window.h"
 #include "objects/Cube.h"
 #include "objects/Skybox.h"
+#include "objects/OBJLoader.h"
+#include "objects/Pyramid.h"
+#include "objects/Renderer.h"
+#include "Objects/Types.h"   
 #include <algorithm>
 #include <chrono>
 #include <thread>
@@ -19,12 +23,17 @@ int main() {
     window.verbose = true;
 
     // Create objects
-    Cube cube(1.0f);
+    Pyramid pyramid(1.0f, 1.5f);
     Skybox sky(20.0f);
+    OBJLoader monkey(
+        "C:/Users/MARKKIE/source/repos/d3letereal/ChompApi/ChompAPI/models/Kettle.obj",
+        { 0, 0, 0 }, 0.06f, { 0, 0, 5 }
+    );
 
-    Transform cubeT{ {0,0,5}, {0,0,0}, 2.5f };
-    Transform skyT{ {0,0,0}, {0,0,0}, 1.0f };
-    Color red{ 255,0,0 };
+    // Object transforms
+    Transform pyramidT{ {0, 0, 5}, {0, 0, 0}, 2.5f };
+    Transform skyT{ {0, 0, 0}, {0, 0, 0}, 1.0f };
+    Transform monkeyT = monkey.t;
 
     window.StartRenderLoop([&]() {
         int w = window.GetWidth();
@@ -33,24 +42,33 @@ int main() {
         float* zb = window.GetZBuffer();
 
         if (fb && zb) {
-            // Clear buffers
+            // Clear framebuffer and z-buffer
             std::fill(fb, fb + w * h, 0x000000);
             std::fill(zb, zb + w * h, 1e9f);
 
-            // Draw skybox first (background)
+            // Draw background
             sky.Draw(skyT, fb, nullptr, w, h);
 
-            // Draw cube in front
-            cube.Draw(red, cubeT, fb, zb, w, h);
+            // Renderer for shading and shadows
+            Renderer renderer(fb, zb, w, h);
+
+            
+            
+
+            // Draw monkey without shadows (optional)
+            monkey.Draw(monkeyT, fb, zb, w, h, Colors::Red);
         }
 
-        // -------- CUBE ROTATION (no console click needed) --------
-        if (window.IsKeyPressed(KEY_W)) cubeT.rotation.x += 0.05f;
-        if (window.IsKeyPressed(KEY_S)) cubeT.rotation.x -= 0.05f;
-        if (window.IsKeyPressed(KEY_A)) cubeT.rotation.y += 0.05f;
-        if (window.IsKeyPressed(KEY_D)) cubeT.rotation.y -= 0.05f;
-        if (window.IsKeyPressed(KEY_Q)) cubeT.rotation.z += 0.05f;
-        if (window.IsKeyPressed(KEY_E)) cubeT.rotation.z -= 0.05f;
+        // -------- Handle Pyramid rotation --------
+
+
+        // -------- Handle Monkey rotation --------
+        if (window.IsKeyPressed(KEY_W)) monkeyT.rotation.x += 0.05f;
+        if (window.IsKeyPressed(KEY_S)) monkeyT.rotation.x -= 0.05f;
+        if (window.IsKeyPressed(KEY_A)) monkeyT.rotation.y += 0.05f;
+        if (window.IsKeyPressed(KEY_D)) monkeyT.rotation.y -= 0.05f;
+        if (window.IsKeyPressed(KEY_Q)) monkeyT.rotation.z += 0.05f;
+        if (window.IsKeyPressed(KEY_E)) monkeyT.rotation.z -= 0.05f;
         });
 
     // Main event loop

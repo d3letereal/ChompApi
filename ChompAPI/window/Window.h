@@ -25,7 +25,7 @@ public:
     bool IsRunning() const { return running.load(); }
     void HandleResize(int newW, int newH);
 
-    bool IsKeyPressed(int key); // <- check key state
+    bool IsKeyPressed(int key);
 
 private:
     int width, height;
@@ -40,13 +40,13 @@ private:
 #ifdef _WIN32
     void* hwnd = nullptr;
     void InitWindows();
+    void PlatformRender();
+    void* GetHWND() const;
 #endif
 
 #ifdef __APPLE__
     void* nsWindow = nullptr;
     void InitMac();
-#endif
-
     void PlatformRender();
-    void* GetHWND() const;
+#endif
 };

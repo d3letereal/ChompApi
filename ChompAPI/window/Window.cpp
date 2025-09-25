@@ -6,9 +6,11 @@
 #ifdef _WIN32
 #include <windows.h>
 
-LRESULT CALLBACK WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
     Window* win = reinterpret_cast<Window*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-    switch (uMsg) {
+    switch (uMsg)
+    {
     case WM_SIZE:
         if (win) {
             int newW = LOWORD(lParam);
@@ -26,9 +28,10 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 #endif
 
 Window::Window(int w, int h, const std::string& t)
-    : width(w), height(h), title(t), running(false) {
+    : width(w), height(h), title(t), running(false)
+{
     framebuffer.resize(width * height, 0x000000);
-    zbuffer.resize(width * height, 1.0f);
+    zbuffer.resize(width * height, 1e9f);
 
 #ifdef __APPLE__
     isMac = true;
@@ -39,34 +42,39 @@ Window::Window(int w, int h, const std::string& t)
     if (verbose)
         std::cout << "Running on " << (isMac ? "macOS" : "Windows") << std::endl;
 
-    if (isMac) {
+    if (isMac)
+    {
 #ifdef __APPLE__
         InitMac();
 #endif
     }
-    else {
+    else
+    {
 #ifdef _WIN32
         InitWindows();
 #endif
     }
 }
 
-Window::~Window() {
+Window::~Window()
+{
     StopRenderLoop();
 #ifdef _WIN32
     if (hwnd) DestroyWindow((HWND)hwnd);
 #endif
 #ifdef __APPLE__
-    // macOS cleanup here
+    // macOS cleanup
 #endif
 }
 
-int* Window::GetFramebuffer() {
+int* Window::GetFramebuffer()
+{
     std::lock_guard<std::mutex> lock(bufferMutex);
     return framebuffer.data();
 }
 
-float* Window::GetZBuffer() {
+float* Window::GetZBuffer()
+{
     std::lock_guard<std::mutex> lock(bufferMutex);
     return zbuffer.data();
 }
@@ -74,76 +82,70 @@ float* Window::GetZBuffer() {
 int Window::GetWidth() const { return width; }
 int Window::GetHeight() const { return height; }
 
-void Window::HandleResize(int newW, int newH) {
+void Window::HandleResize(int newW, int newH)
+{
     std::lock_guard<std::mutex> lock(bufferMutex);
     if (newW == width && newH == height) return;
     width = newW; height = newH;
     framebuffer.resize(width * height, 0x000000);
-    zbuffer.resize(width * height, 1.0f);
+    zbuffer.resize(width * height, 1e9f);
     if (verbose) std::cout << "Resized to " << width << "x" << height << std::endl;
 }
 
-void Window::StartRenderLoop(std::function<void()> onFrame) {
+void Window::StartRenderLoop(std::function<void()> onFrame)
+{
     running = true;
     renderThread = std::thread([this, onFrame]() {
-        while (running) {
-            { // clear buffers
-                std::lock_guard<std::mutex> lock(bufferMutex);
-                std::fill(framebuffer.begin(), framebuffer.end(), 0x000000);
-                std::fill(zbuffer.begin(), zbuffer.end(), 1e9f);
-            }
+        while (running)
+        {
             if (onFrame) onFrame();
+#ifdef _WIN32
             PlatformRender();
-            std::this_thread::sleep_for(std::chrono::milliseconds(16));
+#endif
+#ifdef __APPLE__
+            PlatformRender();
+#endif
+            std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60 FPS
         }
         });
 }
 
-void Window::StopRenderLoop() {
+void Window::StopRenderLoop()
+{
     running = false;
     if (renderThread.joinable()) renderThread.join();
 }
 
-void Window::ProcessEvents() {
+void Window::ProcessEvents()
+{
 #ifdef _WIN32
     MSG msg = {};
-    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+    {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
         if (msg.message == WM_QUIT) running = false;
     }
 #endif
 #ifdef __APPLE__
-    // macOS event loop placeholder
+    // macOS placeholder
 #endif
 }
 
-void Window::PlatformRender() {
+bool Window::IsKeyPressed(int key)
+{
 #ifdef _WIN32
-    HDC hdc = GetDC((HWND)hwnd);
-    BITMAPINFO bmi = {};
-    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = width;
-    bmi.bmiHeader.biHeight = -height; // top-down
-    bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biBitCount = 32;
-    bmi.bmiHeader.biCompression = BI_RGB;
-
-    StretchDIBits(hdc, 0, 0, width, height, 0, 0, width, height,
-        framebuffer.data(), &bmi, DIB_RGB_COLORS, SRCCOPY);
-    ReleaseDC((HWND)hwnd, hdc);
-#endif
-#ifdef __APPLE__
-    // macOS render placeholder
+    return (GetAsyncKeyState(key) & 0x8000) != 0;
+#else
+    return false;
 #endif
 }
 
 #ifdef _WIN32
 void* Window::GetHWND() const { return hwnd; }
-#endif
 
-#ifdef _WIN32
-void Window::InitWindows() {
+void Window::InitWindows()
+{
     HINSTANCE hInstance = GetModuleHandle(NULL);
     WNDCLASS wc = {};
     wc.lpfnWndProc = WinProc;
@@ -161,13 +163,27 @@ void Window::InitWindows() {
     SetWindowLongPtr((HWND)hwnd, GWLP_USERDATA, (LONG_PTR)this);
 }
 
-#endif
+void Window::PlatformRender()
+{
+    HDC hdc = GetDC((HWND)hwnd);
+    BITMAPINFO bmi = {};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = width;
+    bmi.bmiHeader.biHeight = -height; // top-down
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
 
-bool Window::IsKeyPressed(int key) {
-#ifdef _WIN32
-    return (GetAsyncKeyState(key) & 0x8000) != 0;
-#else
-    return false;
-#endif
+    {
+        std::lock_guard<std::mutex> lock(bufferMutex);
+        StretchDIBits(hdc, 0, 0, width, height, 0, 0, width, height,
+            framebuffer.data(), &bmi, DIB_RGB_COLORS, SRCCOPY);
+    }
+    ReleaseDC((HWND)hwnd, hdc);
 }
+#endif
 
+#ifdef __APPLE__
+void Window::InitMac() {}
+void Window::PlatformRender() {}
+#endif
